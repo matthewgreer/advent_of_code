@@ -14,30 +14,72 @@ const reports = input.split("\n");
 let safeCount = 0;
 let safeCountWithTolerance = 0;
 
-const checkReport = (levels, ascending) => {
+const checkReport = (levels) => {
+  let diff;
+  switch (reportDirection(levels[0], levels[1])) {
+    case "unsafe":
+      return false;
+    case "asc":
+      diff = function(a, b) { return b - a; }
+      break;
+    case "desc":
+      diff = function(a, b) { return a - b; }
+      break;
+    default:
+      return false;
+  }
+
   for (let i = 0; i < levels.length - 1; i++) {
-    const diff = ascending ? levels[i + 1] - levels[i] : levels[i] - levels[i + 1];
-    if (diff < 1 || diff > 3) return false;
+    let difference = diff(levels[i], levels[i + 1]);
+    if (difference < 1 || difference > 3) {
+      return false;
+    }
   }
 
   return true;
-}
-
-const isSafe = (levels) => {
-  let ascending;
-
-  if (levels[0] < levels[1]) {
-    ascending = true;
-  } else if (levels[0] > levels[1]) {
-    ascending = false;
-  } else return false;
-
-  return checkReport(levels, ascending);
 };
 
-for (const report of reports) {
-  const levels = report.split(" ").map(el => parseInt(el));
-  if (isSafe(levels)) safeCount++;
+const reportDirection = (zeroIdx, oneIdx) => {
+  if (zeroIdx < oneIdx) {
+    return "asc";
+  } else if (zeroIdx > oneIdx) {
+    return "desc";
+  } else return "unsafe";
 }
 
-console.log(safeCount);
+const isSafe = (levels, withTolerance) => {
+  const safeReport = checkReport(levels);
+  if (safeReport) {
+    return true;
+  } else if (withTolerance) {
+    let i = 0;
+    while (i < levels.length) {
+      let subLevel = levels.slice(0, i).concat(levels.slice(i + 1));
+      const safeSubReport = checkReport(subLevel);
+
+      if (safeSubReport) {
+        return true;
+      } else {
+        i++;
+      }
+    }
+  }
+  return false;
+};
+
+const countSafeReports = (reports) => {
+  for (const report of reports) {
+    const levels = report.split(" ").map(el => parseInt(el));
+    if (!isNaN(levels[0])) {
+      if (isSafe(levels, false)) safeCount++;
+      if (isSafe(levels, true)) safeCountWithTolerance++;
+    }
+  }
+
+  return {
+    "safeCount": safeCount,
+    "safeCountWithTolerance": safeCountWithTolerance
+  };
+};
+
+console.log(countSafeReports(reports));
