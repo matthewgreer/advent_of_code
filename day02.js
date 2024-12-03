@@ -4,45 +4,40 @@
 
   the function returns:
     1. the number of "safe" "reports" in the input.
-    2.
-
+    2. the number of "safe" "reports" in the input, with tolerance for a single bad level in a report (i.e. if removing a single level from an unsafe report would make it safe, the report instead counts as safe)
 */
 
 import getInput from "./shared/getInput.js";
 
-const reports = await getInput(2);
+const input = await getInput(2);
+const reports = input.split("\n");
 let safeCount = 0;
+let safeCountWithTolerance = 0;
 
-const checkAscReport = (levels) => {
+const checkReport = (levels, ascending) => {
   for (let i = 0; i < levels.length - 1; i++) {
-    const diff = levels[i + 1] - levels[i];
+    const diff = ascending ? levels[i + 1] - levels[i] : levels[i] - levels[i + 1];
     if (diff < 1 || diff > 3) return false;
   }
 
   return true;
-};
+}
 
-const checkDescReport = (levels) => {
-  for (let i = 0; i < levels.length - 1; i++) {
-    const diff = levels[i] - levels[i + 1];
-    if (diff < 1 || diff > 3) return false;
-  }
-
-  return true;
-};
-
-const isSafe = (report) => {
-  const levels = report.split(" ").map(el => parseInt(el));
+const isSafe = (levels) => {
+  let ascending;
 
   if (levels[0] < levels[1]) {
-    return checkAscReport(levels);
+    ascending = true;
   } else if (levels[0] > levels[1]) {
-    return checkDescReport(levels);
+    ascending = false;
   } else return false;
+
+  return checkReport(levels, ascending);
 };
 
-for (const report of reports.split("\n")) {
-  if (isSafe(report)) safeCount++;
+for (const report of reports) {
+  const levels = report.split(" ").map(el => parseInt(el));
+  if (isSafe(levels)) safeCount++;
 }
 
 console.log(safeCount);
