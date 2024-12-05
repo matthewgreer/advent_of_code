@@ -30,8 +30,6 @@ const rLength = rs.length,
       rules = rs.slice(),
       updates = uds.slice(0, uLength - 1); // trim blank space at end
 
-let total = 0;
-
 // create dictionary of pages that must come after pages
 const pageRules = {};
 rules.forEach(([p1, p2]) => {
@@ -39,24 +37,32 @@ rules.forEach(([p1, p2]) => {
   pageRules[p1].add(p2);
 });
 
-for (const update of updates) {
-  // start with last page of update, check whether any of the preceding pages are in its dictionary of pages it must come before.
-  let valid = true,
+const sumOfValidMids = () => {
+  let total = 0;
+  
+  for (const update of updates) {
+    // start with last page of update, check whether any of the preceding pages are in its dictionary of pages it must come before.
+    let valid = true,
       i = update.length - 1;
 
-  while (valid && i > 0) {
-    let j = i - 1;
-    while (valid && j >= 0) {
-      if (pageRules[update[i]].has(update[j])) valid = false;
-      j--;
+    while (valid && i > 0) {
+      let j = i - 1;
+      while (valid && j >= 0) {
+        if (pageRules[update[i]].has(update[j])) valid = false;
+        j--;
+      }
+      i--;
     }
-    i--;
+
+    if (valid) {
+      let mid = Math.floor(update.length / 2);
+      total += update[mid];
+    }
   }
 
-  if (valid) {
-    let mid = Math.floor(update.length / 2);
-    total += update[mid];
-  }
+  return total;
 }
 
-console.log(total);
+
+
+console.log(sumOfValidMids());
