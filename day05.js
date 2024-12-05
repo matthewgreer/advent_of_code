@@ -25,8 +25,7 @@ uds = uds.split("\n").map(u => {
   return update.map(n => parseInt(n));
 });
 
-const rLength = rs.length,
-      uLength = uds.length,
+const uLength = uds.length,
       rules = rs.slice(),
       updates = uds.slice(0, uLength - 1); // trim blank space at end
 
@@ -37,9 +36,24 @@ rules.forEach(([p1, p2]) => {
   pageRules[p1].add(p2);
 });
 
+const repairUpdate = (update) => {
+  return update.sort((a, b) => {
+    if (pageRules[a].has(b)) return -1;
+    else if (pageRules[b].has(a)) return 1;
+    else return 0;
+  });
+};
+
+const midValue = (update) => {
+  let mid = Math.floor(update.length / 2);
+
+  return update[mid];
+}
+
 const sumOfValidMids = () => {
-  let total = 0;
-  
+  let totalValidMids = 0,
+      totalOfCorrectedMids = 0;
+
   for (const update of updates) {
     // start with last page of update, check whether any of the preceding pages are in its dictionary of pages it must come before.
     let valid = true,
@@ -55,14 +69,16 @@ const sumOfValidMids = () => {
     }
 
     if (valid) {
-      let mid = Math.floor(update.length / 2);
-      total += update[mid];
+      totalValidMids += midValue(update);
+    } else {
+      totalOfCorrectedMids += midValue(repairUpdate(update));
     }
   }
 
-  return total;
+  return {
+    "totalValidMids": totalValidMids,
+    "totalWithCorrectedMids": totalOfCorrectedMids,
+  };
 }
-
-
 
 console.log(sumOfValidMids());
