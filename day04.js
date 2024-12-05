@@ -50,28 +50,11 @@ const countXmas = (rows) => {
 };
 
 const countMasInXShape = (rows) => {
-  // const diagonals = [
-  //   [
-  //     [-1, -1], // up-left
-  //     [1, 1]    // down-right
-  //   ],
-  //   [
-  //     [-1, 1],  // up-right
-  //     [1, -1]   // down-left
-  //   ],
-  // ];
   let count = 0;
 
   for (let i = 1; i < numberOfRows - 1; i++) {
     for (let j = 1; j < numberOfCols - 1; j++) {
-      // if we find an "A"
       if (rows[i][j] === "A") {
-        // check if it is the center of 2 "MAS" words crossing in an X shape
-        // if up-left is an "M" and down-right is an "S" OR if up-left is an "S" and down-right is an "M"
-        // AND
-        // if up-right is an "M" and down-left is an "S" OR if up-right is an "S" and down-left is an "M"
-        // count ++
-
         if (
           (
             (rows[i - 1][j - 1] === "M" && rows[i + 1][j + 1] === "S") ||
