@@ -3,7 +3,9 @@ input: "map" of a patrolling "guard". it is a string representing a grid of "." 
   - if there is something directly in front of you, turn right 90 degrees
   - otherwise, take a step forward
 
-output: will be a number representing the count of distinct positions, including the guard's starting position, that the guard will visit before leaving the mapped area.
+output:
+  1. a number representing the count of distinct positions, including the guard's starting position, that the guard will visit before leaving the mapped area.
+  2. the number of positions at which a new obstacle may be placed in order to force the guard into a looping pattern
 */
 
 import getInput from './shared/getInput.js';
@@ -98,7 +100,7 @@ const countLoops = (startingGrid, v, x, y) => {
 
   for (let i = 0; i < numRows; i++) {
     for (let j = 0; j < numCols; j++) {
-      const grid = JSON.parse(JSON.stringify(startingGrid)); // need deep copy of startingGrid
+      const grid = startingGrid.map(r => r.slice()); // need deep copy of startingGrid
       if (grid[i][j] === "#") continue;
 
       grid[i][j] = "#";
