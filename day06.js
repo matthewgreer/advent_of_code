@@ -9,8 +9,6 @@ output: will be a number representing the count of distinct positions, including
 import getInput from './shared/getInput.js';
 
 const input = await getInput(6);
-let rows = input.split('\n');
-rows = rows.slice(0, rows.length - 1); // trim blank space at end
 
 const VECTORS = {
   0: [-1, 0], // up
@@ -18,39 +16,104 @@ const VECTORS = {
   2: [1, 0],  // down
   3: [0, -1]  // left
 }
-let guardV = 0,
-    guardX,
-    guardY;
 
-const startingGrid = rows.map(row => {
-  if (row.includes('^')) {
-    [guardX, guardY] = [rows.indexOf(row), row.indexOf('^')];
+const startingGridAndGuard = (inputString) => {
+  let rows = inputString.split('\n');
+  rows = rows.slice(0, rows.length - 1); // trim blank space at end
+
+  let startingGuardV = 0,
+      startingGuardX,
+      startingGuardY;
+
+  const startingGrid = rows.map(row => {
+    if (row.includes('^')) {
+      [startingGuardX, startingGuardY] = [rows.indexOf(row), row.indexOf('^')];
+    }
+
+    return row.split('')
+  });
+
+  return [startingGrid, startingGuardV, startingGuardX, startingGuardY];
+};
+
+const countGuardedPositions = (grid, guardV, guardX, guardY) => {
+  const numRows = grid.length,
+        numCols = grid[0].length,
+        guardedPositions = new Set();
+
+  while (guardX >= 0 && guardX < numRows && guardY >= 0 && guardY < numCols) {
+    guardedPositions.add(`X${guardX}Y${guardY}`);
+
+    let guardDir = VECTORS[guardV],
+    nextX = guardX + guardDir[0],
+    nextY = guardY + guardDir[1];
+
+    if (nextX < 0 || nextX >= numRows || nextY < 0 || nextY >= numCols) break;
+
+    let nextPos = grid[nextX][nextY];
+
+    if (nextPos === "#") {
+      guardV = (guardV + 1) % 4;
+    } else {
+      guardX = nextX;
+      guardY = nextY;
+    }
   }
-  return row.split('')
-});
 
-let grid = startingGrid.slice(),
-    count = 0;
+  return guardedPositions.size;
+};
 
-console.log("START: ", "guardX: ", guardX, "guardY: ", guardY);
+const hasLoop = (grid, guardV, guardX, guardY) => {
+  const visitedPositions = new Set();
 
-while (guardX >= 0 && guardX < rows.length && guardY >= 0 && guardY < rows[0].length) {
-  if (grid[guardX][guardY] !== "x") {
-    count++;
-    grid[guardX][guardY] = "x";
-  }
+  while (guardX >= 0 && guardX < numRows && guardY >= 0 && guardY < numCols) {
+    if (visitedPositions.has(`V${guardV}X${guardX}Y${guardY}`)) return true;
 
-  let guardDir = VECTORS[guardV],
+    visitedPositions.add(`V${guardV}X${guardX}Y${guardY}`);
+
+    let guardDir = VECTORS[guardV],
       nextX = guardX + guardDir[0],
-      nextY = guardY + guardDir[1],
-      nextPos = grid[nextX][nextY];
+      nextY = guardY + guardDir[1];
+    if (nextX < 0 || nextX >= numRows || nextY < 0 || nextY >= numCols) return false;
 
-  if (nextPos === "#") {
-    guardV = (guardV + 1) % 4;
-  } else {
-    guardX = nextX;
-    guardY = nextY;
+    let nextPos = grid[nextX][nextY];
+
+    if (nextPos === "#") {
+      guardV = (guardV + 1) % 4;
+    } else {
+      guardX = nextX;
+      guardY = nextY;
+    }
   }
-}
 
-console.log(count);
+  return false;
+};
+
+const countLoops = (startingGrid, v, x, y) => {
+  let count = 0;
+
+  for (let i = 0; i < numRows; i++) {
+    for (let j = 0; j < numCols; j++) {
+      let grid = startingGrid.slice();
+      if (grid[i][j] === "#") continue;
+      else grid[i][j] = "#";
+
+      if (hasLoop(grid, v, x, y)) count++;
+    }
+  }
+
+  return count;
+};
+
+
+console.log(countGuardedPositions(...startingGridAndGuard(input)));
+// console.log(countLoops(...startingGridAndGuard(input)));
+
+const testGrid = "....#.....\n.........#\n..........\n..#.......\n.......#..\n..........\n.#..^.....\n........#.\n#.........\n......#...\n"
+
+// console.log(startingGridAndGuard(testGrid));
+
+// console.log(countGuardedPositions(...startingGridAndGuard(testGrid)));
+// console.log(countLoops(...startingGridAndGuard(testGrid)));
+
+
