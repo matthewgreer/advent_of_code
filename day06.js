@@ -69,20 +69,14 @@ const hasLoop = (grid, guardV, guardX, guardY) => {
         visitedPositions = new Set();
 
   while (guardX >= 0 && guardX < numRows && guardY >= 0 && guardY < numCols) {
-    if (visitedPositions.has(`V${guardV}X${guardX}Y${guardY}`)) {
-      console.log(`Guard has already been at ${[guardX, guardY]} facing ${guardV}. Loop exists.`)
-      return true;
-    }
+    if (visitedPositions.has(`V${guardV}X${guardX}Y${guardY}`)) return true;
 
     visitedPositions.add(`V${guardV}X${guardX}Y${guardY}`);
 
     let guardDir = VECTORS[guardV],
       nextX = guardX + guardDir[0],
       nextY = guardY + guardDir[1];
-    if (nextX < 0 || nextX >= numRows || nextY < 0 || nextY >= numCols) {
-      console.log(`Elvis has left the building at ${[nextX, nextY]}. No loop.`)
-      return false;
-    }
+    if (nextX < 0 || nextX >= numRows || nextY < 0 || nextY >= numCols) return false;
 
     let nextPos = grid[nextX][nextY];
 
@@ -94,7 +88,6 @@ const hasLoop = (grid, guardV, guardX, guardY) => {
     }
   }
 
-  console.log(`Not sure why we hit this condition. Guard at ${[guardX, guardY]}. No loop.`);
   return false;
 };
 
@@ -106,15 +99,9 @@ const countLoops = (startingGrid, v, x, y) => {
   for (let i = 0; i < numRows; i++) {
     for (let j = 0; j < numCols; j++) {
       const grid = JSON.parse(JSON.stringify(startingGrid)); // need deep copy of startingGrid
-      if (grid[i][j] === "#"){
-        console.log(`Already a '#' at ${[i, j]}. Skipping.`)
-        continue;
-      }
+      if (grid[i][j] === "#") continue;
 
       grid[i][j] = "#";
-      console.log("***********");
-      if (i === 6 && j === 3) console.log(grid);
-      console.log(`Added # at ${[i, j]}`);
 
       if (hasLoop(grid, v, x, y)) count++;
     }
@@ -124,35 +111,5 @@ const countLoops = (startingGrid, v, x, y) => {
 };
 
 
-// console.log(countGuardedPositions(...startingGridAndGuard(input)));
-console.log(countLoops(...startingGridAndGuard(input)));
-
-const testGrid =  "....#.....\n" +
-                  ".........#\n" +
-                  "..........\n" +
-                  "..#.......\n" +
-                  ".......#..\n" +
-                  "..........\n" +
-                  ".#..^.....\n" +
-                  "........#.\n" +
-                  "#.........\n" +
-                  "......#...\n" +
-                  "";
-const testLoop1 =   "....#.....\n" +
-                    ".........#\n" +
-                    "..........\n" +
-                    "..#.......\n" +
-                    ".......#..\n" +
-                    "..........\n" +
-                    ".#.#^.....\n" +
-                    "........#.\n" +
-                    "#.........\n" +
-                    "......#...\n" +
-                    "";
-
-// console.log(startingGridAndGuard(testGrid));
-// console.log(countGuardedPositions(...startingGridAndGuard(testGrid)));
-// console.log(testLoop1);
-// console.log(countLoops(...startingGridAndGuard(testGrid)));
-
-
+console.log("count of guarded positions:", countGuardedPositions(...startingGridAndGuard(input)));
+console.log("count of positions for loops:", countLoops(...startingGridAndGuard(input)));
