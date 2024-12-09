@@ -20,16 +20,15 @@ const VECTORS = {
 }
 
 const startingGridAndGuard = (inputString) => {
-  let rows = inputString.split('\n');
-  rows = rows.slice(0, rows.length - 1); // trim blank space at end
+  let rows = inputString.trim().split('\n');
 
   let startingGuardV = 0,
       startingGuardX,
       startingGuardY;
 
-  const startingGrid = rows.map(row => {
+  const startingGrid = rows.map((row, i) => {
     if (row.includes('^')) {
-      [startingGuardX, startingGuardY] = [rows.indexOf(row), row.indexOf('^')];
+      [startingGuardX, startingGuardY] = [i, row.indexOf('^')];
     }
 
     return row.split('')
@@ -43,14 +42,18 @@ const countGuardedPositions = (grid, guardV, guardX, guardY) => {
         numCols = grid[0].length,
         guardedPositions = new Set();
 
-  while (guardX >= 0 && guardX < numRows && guardY >= 0 && guardY < numCols) {
+  while (true) {
     guardedPositions.add(`X${guardX}Y${guardY}`);
 
-    let guardDir = VECTORS[guardV],
-    nextX = guardX + guardDir[0],
-    nextY = guardY + guardDir[1];
+    let [vx, vy] = VECTORS[guardV],
+        nextX = guardX + vx,
+        nextY = guardY + vy;
 
-    if (nextX < 0 || nextX >= numRows || nextY < 0 || nextY >= numCols) break;
+    if (nextX < 0 ||
+        nextX >= numRows ||
+        nextY < 0 ||
+        nextY >= numCols
+      ) return guardedPositions.size;
 
     let nextPos = grid[nextX][nextY];
 
@@ -61,8 +64,6 @@ const countGuardedPositions = (grid, guardV, guardX, guardY) => {
       guardY = nextY;
     }
   }
-
-  return guardedPositions.size;
 };
 
 const hasLoop = (grid, guardV, guardX, guardY) => {
@@ -113,5 +114,8 @@ const countLoops = (startingGrid, v, x, y) => {
 };
 
 
-console.log("count of guarded positions:", countGuardedPositions(...startingGridAndGuard(input)));
-console.log("count of positions for loops:", countLoops(...startingGridAndGuard(input)));
+console.log({
+  "count of guarded positions:": countGuardedPositions(...startingGridAndGuard(input)),
+  "count of positions for loops:": countLoops(...startingGridAndGuard(input))
+});
+
