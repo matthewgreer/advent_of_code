@@ -13,10 +13,34 @@ input is a string of "calibration equations", with one equation per line. the op
 
 the goal is to determine whether the remaining numbers in each equation line can be combined with operators to produce the test value given before the colon. NOTE: operators are evaluated left-to-right, not by order of operations. For example, the second line above has two possible positions for operators, and of the four possible combinations, two produce the correct result WHEN EVALUATED LEFT-TO-RIGHT: 81 + 40 * 27 = 3267 and 81 * 40 + 27 = 3267.
 
-part two adds a third potential operator, a concatenator operator. evaluating left-to-right, still, two numbers could either be added, multiplied, or concatenated. for example, the first line above could be 10 + 19 = 29, 10 * 19 = 190, or 1019 = 1019.
+part two adds a third potential operator, a concatenator operator. evaluating left-to-right, still, numbers could either be added, multiplied, or concatenated.
+
+for example, the first line above could be 10 + 19 = 29, 10 * 19 = 190, or 10 c 19 = 1019.
+
+the last line 292: 11 6 16 20 above could be interpreted as:
+11 + 6 = 17, [16, 20]
+11 * 6 = 66, [16, 20]
+11 c 6 = 116, [16, 20]
+
+17 + 16 = 33, [20]
+17 * 16 = 272, [20]
+17 c 16 = 1716, [20]
+
+33 + 20 = 53
+33 * 20 = 660
+33 c 20 = 3320
+
+272 + 20 = 292 <-- this equals the test value, so this is a valid equation
+272 * 20 = 5440
+272 c 20 = 27220
+
+1718 + 20 = 1738
+1718 * 20 = 34360
+1718 c 20 = 171820
 
 the output is the total calibration result, the sum of the test values from just the equations that could possibly be correct with the potential operators.
   1. only + and * operators
+  2. +, *, and c (concatenation) operators
 */
 
 import getInput from './shared/getInput.js';
@@ -34,7 +58,9 @@ const testEquation = (equation) => {
     if (nums.length === 0) return acc === value;
 
     const [num, ...rest] = nums;
-    return testEquationHelper(rest, acc + num, value) || testEquationHelper(rest, acc * num, value);
+    const concattedNum = parseInt(acc.toString() + num.toString());
+
+    return testEquationHelper(rest, acc + num, value) || testEquationHelper(rest, acc * num, value) || testEquationHelper(rest, concattedNum, value);
   };
 
   const valid = testEquationHelper(nums, 0, value);
@@ -47,7 +73,4 @@ const totalCalibrationResult = (eqs) => {
   return total;
 }
 
-const testInput = "190: 10 19\n3267: 81 40 27\n83: 17 5\n156: 15 6\n7290: 6 8 6 15\n161011: 16 10 13\n192: 17 8 14\n21037: 9 7 18 13\n292: 11 6 16 20".trim().split('\n');
-
-// console.log(totalCalibrationResult(testInput)); // 3749
 console.log(totalCalibrationResult(equations)); //
