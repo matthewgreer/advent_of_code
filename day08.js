@@ -15,18 +15,19 @@ const input = await getInput(8);
 const antennaMap = input.trim().split('\n').map(row => row.split(''));
 const rows = antennaMap.length;
 const cols = antennaMap[0].length;
-const antinodes = new Set();
+const antinodesOne = new Set();
+const antinodesTwo = new Set();
 
 const mapAntennas = () => {
   const locations = {};
   for (let i = 0; i < rows; i++) {
     for (let j = 0; j < cols; j++) {
-      const cell = antennaMap[i][j];
-      if (cell === '.') continue;
-      if (!locations[cell]) {
-        locations[cell] = [];
+      const frequency = antennaMap[i][j];
+      if (frequency === '.') continue;
+      if (!locations[frequency]) {
+        locations[frequency] = [];
       }
-      locations[cell].push([i, j]);
+      locations[frequency].push([i, j]);
     }
   }
 
@@ -35,32 +36,57 @@ const mapAntennas = () => {
 
 const antennaLocations = mapAntennas();
 
-const findAntinodes = (ant1x, ant1y, ant2x, ant2y) => {
+const findAntinodesPartOne = (ant1x, ant1y, ant2x, ant2y) => {
   const dx = ant2x - ant1x;
   const dy = ant2y - ant1y;
   const x1 = ant1x - dx;
   const y1 = ant1y - dy;
   const x2 = ant2x + dx;
   const y2 = ant2y + dy;
-  if (x1 >= 0 && x1 < rows && y1 >= 0 && y1 < cols) antinodes.add(`${x1},${y1}`);
-  if (x2 >= 0 && x2 < rows && y2 >= 0 && y2 < cols) antinodes.add(`${x2},${y2}`);
+  if (x1 >= 0 && x1 < rows && y1 >= 0 && y1 < cols) antinodesOne.add(`${x1},${y1}`);
+  if (x2 >= 0 && x2 < rows && y2 >= 0 && y2 < cols) antinodesOne.add(`${x2},${y2}`);
 };
 
-const findAntinodesForAntenna = (antenna) => {
-  const locations = antennaLocations[antenna];
+const findAntinodesPartTwo = (ant1x, ant1y, ant2x, ant2y) => {
+  const dx = ant2x - ant1x;
+  const dy = ant2y - ant1y;
+  let x = ant1x;
+  let y = ant1y;
+  while (x >= 0 && x < rows && y >= 0 && y < cols) {
+    antinodesTwo.add(`${x},${y}`);
+    x += dx;
+    y += dy;
+  }
+
+  x = ant2x;
+  y = ant2y;
+
+  while (x >= 0 && x < rows && y >= 0 && y < cols) {
+    antinodesTwo.add(`${x},${y}`);
+    x -= dx;
+    y -= dy;
+  }
+}
+
+const findAntinodesForAntenna = (frequency) => {
+  const locations = antennaLocations[frequency];
   for (let i = 0; i < locations.length; i++) {
     for (let j = i + 1; j < locations.length; j++) {
-      findAntinodes(locations[i][0], locations[i][1], locations[j][0], locations[j][1]);
+      findAntinodesPartOne(locations[i][0], locations[i][1], locations[j][0], locations[j][1]);
+      findAntinodesPartTwo(locations[i][0], locations[i][1], locations[j][0], locations[j][1]);
     }
   }
 };
 
-const findPart1Antinodes = () => {
+const findAntinodes = () => {
   for (const antenna in antennaLocations) {
     findAntinodesForAntenna(antenna);
   }
 
-  return antinodes.size;
+  return {
+    partOne: antinodesOne.size,
+    partTwo: antinodesTwo.size
+  };
 };
 
-console.log(findPart1Antinodes());
+console.log(findAntinodes());
