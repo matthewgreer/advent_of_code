@@ -82,9 +82,8 @@ const lastFileId = (driveMap) => {
   let i = driveMap.length - 1;
   while (driveMap[i] === '.' && i >= 0) i--;
 
-  // console.log("last file id", driveMap[i]);
   return driveMap[i];
-}
+};
 
 const nextOpenSpaceIndex = (driveMap, start = 0) => {
   let spaceIndex = start;
@@ -140,47 +139,27 @@ const trimTrailingEmptySpace = (driveMap) => {
 
 const compactDriveByFile = (inputString) => {
   const driveMap = makeDriveMap(inputString);
-  // console.log("driveMap", driveMap);
-
   let firstOpenSpace = nextOpenSpaceIndex(driveMap, 0);
-  // console.log("firstOpenSpace", firstOpenSpace, driveMap[firstOpenSpace]);
-
   let fileId = lastFileId(driveMap);
   let fileSizePointer = inputString.length - 1;
 
   while (fileId >= 0) {
-    // console.log("fileId", fileId);
     let fileStart = driveMap.indexOf(fileId.toString());
-    // console.log("fileStart", fileStart);
-    // console.log("FILE SIZE", inputString[fileSizePointer])
     let fileSize = parseInt(inputString[fileSizePointer]);
-    // console.log("fileSizePointer", fileSizePointer, "fileSize", fileSize);
     let spaceIndex = largeEnoughSpace(driveMap, firstOpenSpace, fileStart, fileSize);
 
     if (spaceIndex !== -1) {
-      // console.log("emptySpaceIndex", spaceIndex);
-      // console.log("moving file");
       moveFileToSpace(driveMap, fileId, fileStart, fileSize, spaceIndex);
-      // console.log("updated driveMap", driveMap);
       if (driveMap[firstOpenSpace] !== '.') {
-        // console.log("firstOpenSpace,", firstOpenSpace, "is no longer open. Scanning for next open space.")
         firstOpenSpace = nextOpenSpaceIndex(driveMap, firstOpenSpace);
-        // console.log("updated firstOpenSpace", firstOpenSpace);
       }
-    } else {
-      // console.log(`not enough empty space to move ${fileId}.`);
     }
 
     fileSizePointer -= 2;
     fileId--;
   }
 
-  console.log("compacted");
-  let compacted = trimTrailingEmptySpace(driveMap);
-  // console.log(compacted.length); // 51331
-  console.log(compacted.slice(0,100).concat(["ELLIPSIS"], compacted.slice(51231)).join(" "));
-  return compacted;
-  // return driveMap;
+  return driveMap;
 }
 
 const calculateChecksum = (compactedDrive) => {
@@ -192,17 +171,12 @@ const calculateChecksum = (compactedDrive) => {
   }, 0);
 };
 
-// const inputString = "2333133121414131402";
 const inputString = input.trim();
 
-// const inputString = input.slice(0, 250).concat(input.slice(9850));
+const compactedDriveOne = compactDrive(inputString);
+const checksumOne = calculateChecksum(compactedDriveOne);
+console.log(checksumOne); // 6398252054886
 
-// const driveMapOne = makeDriveMap(inputString);
-// const compactedDriveOne = compactDrive(driveMapOne);
-// const checksumOne = calculateChecksum(compactedDriveOne);
-// console.log(checksumOne);
-
-// const driveMapTwo = makeDriveMap(inputString);
 const compactedDriveTwo = compactDriveByFile(inputString);
 const checksumTwo = calculateChecksum(compactedDriveTwo);
-console.log(checksumTwo);
+console.log(checksumTwo); // 6415666220005
