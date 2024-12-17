@@ -46,81 +46,123 @@ import getInput from './shared/getInput.js';
 const VECTORS = [[-1, 0], [0, 1], [1, 0], [0, -1]];
 const input = await getInput(10);
 
-const formatMap = (inputString) => {
-  return inputString.trim().split('\n').map((row, rIdx) => row.split('').map((elev, cIdx) => {
+class Node {
+  constructor(map, row, column) {
+    this.map = map;
+    this.row = row;
+    this.column = column;
+    this.elevation = this.map[row][column];
+
+    this.vectors = [[-1, 0], [0, 1], [1, 0], [0, -1]];
+    this.stepsUp = this.findValidStepsUp();
+    this.peaks = this.accessiblePeaks();
+    // this.trails = this.uniqueTrails();
+  }
+
+  inMapBounds(r, c) {
+    return r >= 0 && r < this.map.length && c >= 0 && c < this.map[0].length;
+  }
+
+  findValidStepsUp() {
+    const steps = [];
+    for (const [vr, vc] of this.vectors) {
+      const stepRow = this.row + vr;
+      const stepCol = this.column + vc;
+      if (this.inMapBounds(stepRow, stepCol) && this.map[stepRow][stepCol] === this.elevation + 1) {
+        steps.push(new Node(this.map, stepRow, stepCol));
+      }
+    }
+
+    return steps;
+  }
+
+  makeKey(r, c) {
+    return r.toString() + ',' + c.toString();
+  }
+
+  accessiblePeaks() {
+    const peaks = new Set();
+    for (const step of this.stepsUp) {
+      if (step.elevation === 9) peaks.add(this.makeKey(step.row, step.column));
+      const stepPeaks = step.peaks;
+      for (const peak of stepPeaks) peaks.add(peak);
+    }
+
+    return peaks;
+  }
+
+  uniqueTrails() {
+    // will implement a DFS solution, maybe returns just the count, or maybe returns a collection of arrays of coordinates representing each unique path?
+
+
+  }
+
+  countPeaks() {
+    return this.peaks.size;
+  }
+
+  countTrails() {
+    return this.trails.size; // maybe?
+  }
+};
+
+const mapTrailheads = (inputString) => {
+  const thCoords = [];
+  const map = inputString.trim().split('\n').map((row, rIdx) => row.split('').map((elev, cIdx) => {
     let e = parseInt(elev);
     let coord = [rIdx, cIdx];
 
-    if (e === 0) trailheads.push(coord);
+    if (e === 0) thCoords.push(coord);
 
     return e;
   }));
+
+  const trailheads = thCoords.map((coord) => {
+    const [r, c] = coord;
+    return new Node(map, r, c);
+  })
+
+  return trailheads;  // just return trailheads?
 };
 
-const key = (row, column) => {
-  return row.toString() + ',' + column.toString();
-};
-
-const elevation = (map, row, column) => {
-  return map[row][column];
-};
-
-const validStepsUp = (map, row, col) => {
-  const elev = elevation(map, row, col),
-        stepsUp = [];
-
-  for (const [vr, vc] of VECTORS) {
-    const stepRow = row + vr;
-    const stepCol = col + vc;
-    if (stepRow >= 0 &&
-      stepRow < map.length &&
-      stepCol >= 0 &&
-      stepCol < map[0].length &&
-      map[stepRow][stepCol] === elev + 1
-    ) stepsUp.push([stepRow, stepCol]);
-  }
-
-  return stepsUp;
-};
-
-const validPeaks = (map, row, col, peaks = new Set()) => {
-  const elev = elevation(map, row, col);
-  const stepsUp = validStepsUp(map, row, col);
-
-  for (let i = 0; i < stepsUp.length; i++) {
-    const [stepR, stepC] = stepsUp[i];
-    const stepElev = elevation(map, stepR, stepC);
-
-    if (stepElev === 9) peaks.add(key(stepR, stepC));
-
-    let otherPeaks = validPeaks(map, stepR, stepC, peaks);
-    otherPeaks.forEach(p => peaks.add(p));
-  }
-
-  return peaks;
-};
-
-const scoreAllTrailheads = (trailheads, map) => {
+const scoreAllTrailheads = (trailheads) => {
   const scores = {};
 
   for (const th of trailheads) {
-    const [thR, thC] = th;
-    scores[th] = validPeaks(map, thR, thC).size;
+    scores[th.makeKey(th.row, th.column)] = th.countPeaks();
   }
 
   return scores;
 };
 
-const totalMapScore = (inputString) => {
-  const map = formatMap(inputString);
-  const scores = scoreAllTrailheads(trailheads, map);
+const rateAllTrailheads = (trailheads) => {
+  const ratings = {};
+
+  for (const th of trailheads) {
+    ratings[th.makeKey(th.row, th.column)] = th.countTrails();
+  }
+
+  return ratings;
+};
+
+const totalMapScore = (trailheads) => {
+  const scores = scoreAllTrailheads(trailheads);
   const total = Object.values(scores).reduce((t, v) => t += v);
 
   return total;
 };
 
-const trailheads = [];
-const inputString = input;
-// const inputString = "89010123\n78121874\n87430965\n96549874\n45678903\n32019012\n01329801\n10456732" // test input
+const totalMapRating = (trailheads) => {
+  const ratings = rateAllTrailheads(trailheads);
+  const total = Object.values(ratings).reduce((t, v) => t += v);
 
-console.log(totalMapScore(inputString));
+  return total;
+}
+
+// const inputString = "89010123\n78121874\n87430965\n96549874\n45678903\n32019012\n01329801\n10456732" // test input
+const inputString = input;
+const trailheads = mapTrailheads(inputString);
+
+
+console.log(totalMapScore(trailheads));  // test input: 36, full input: 514.
+// console.log(totalMapRating(trailheads)); // test input: 81, full input: ???.
