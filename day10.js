@@ -22,19 +22,19 @@ for example:
   [6,0]: 5
   [6,6]: 3
   [7,1]: 5
-  [0,2]: 5
+  Total Score: 36
 
   here are the 9 "trailheads" from the example "map", but this time they are followed by their "rating" -- the number of distinct "trails" to "peaks" from each "trailhead".
-  [0,4]: 6
-  [2,4]: 5
-  [4,6]: 3
-  [5,2]: 1
-  [5,5]: 3
-  [6,0]: 5
-  [6,6]: 3
-  [7,1]: 5
-
-
+  [0,2]: 20
+  [0,4]: 24
+  [2,4]: 10
+  [4,6]:  4
+  [5,2]:  1
+  [5,5]:  4
+  [6,0]:  5
+  [6,6]:  8
+  [7,1]:  5
+  Total Rating: 81
 
   output:
   PART ONE: the sum total of the "scores" of all "trailheads" on the "map"
@@ -56,7 +56,6 @@ class Node {
     this.vectors = [[-1, 0], [0, 1], [1, 0], [0, -1]];
     this.stepsUp = this.findValidStepsUp();
     this.peaks = this.accessiblePeaks();
-    // this.trails = this.uniqueTrails();
   }
 
   inMapBounds(r, c) {
@@ -91,18 +90,33 @@ class Node {
     return peaks;
   }
 
-  uniqueTrails() {
-    // will implement a DFS solution, maybe returns just the count, or maybe returns a collection of arrays of coordinates representing each unique path?
-
-
-  }
-
   countPeaks() {
     return this.peaks.size;
   }
 
-  countTrails() {
-    return this.trails.size; // maybe?
+  countUniqueTrails() {
+    const dfs = (node, visited) => {
+      const key = node.makeKey(node.row, node.column);
+
+      if (node.elevation === 9) return 1;
+
+      visited.add(key);
+
+      let uniqueTrails = 0;
+
+      for (const step of node.stepsUp) {
+        const stepKey = step.makeKey(step.row, step.column);
+        if (!visited.has(stepKey)) {
+          uniqueTrails += dfs(step, visited);
+        }
+      }
+
+      visited.delete(key);
+
+      return uniqueTrails;
+    }
+
+    return dfs(this, new Set());
   }
 };
 
@@ -122,7 +136,7 @@ const mapTrailheads = (inputString) => {
     return new Node(map, r, c);
   })
 
-  return trailheads;  // just return trailheads?
+  return trailheads;
 };
 
 const scoreAllTrailheads = (trailheads) => {
@@ -139,7 +153,7 @@ const rateAllTrailheads = (trailheads) => {
   const ratings = {};
 
   for (const th of trailheads) {
-    ratings[th.makeKey(th.row, th.column)] = th.countTrails();
+    ratings[th.makeKey(th.row, th.column)] = th.countUniqueTrails();
   }
 
   return ratings;
@@ -163,6 +177,5 @@ const totalMapRating = (trailheads) => {
 const inputString = input;
 const trailheads = mapTrailheads(inputString);
 
-
 console.log(totalMapScore(trailheads));  // test input: 36, full input: 514.
-// console.log(totalMapRating(trailheads)); // test input: 81, full input: ???.
+console.log(totalMapRating(trailheads)); // test input: 81, full input: 1162.
