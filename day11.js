@@ -14,6 +14,7 @@
     step 6  (22 #s):  2097446912 14168 4048 2 0 2 4 40 48 2024 40 48 80 96 2 8 6 7 6 0 3 2
 
   part 1: given the input, how many numbers will there be after 25 steps?
+  part 2: given the input, how many numbers will there be after 75 steps? hint: it's too many to contain in an array.
 */
 
 import getInput from './shared/getInput.js';
@@ -24,47 +25,41 @@ const initializeInput = (inputString) => {
   return inputString.trim().split(' ');     // keep numbers in string form.
 };
 
-const transformNumber = (numString) => {
-  if (numString === '0') return ['1'];
-  if (numString.length % 2 === 0) {
-    let mid = Math.floor(numString.length / 2),
-        left = numString.slice(0, mid),
-        right = numString.slice(mid);
+const countNumbersAfterTransformations = (sequence, transformations) => {
+  const cache = new Map();
 
-    return [parseInt(left).toString(), parseInt(right).toString()];
-  }
+  const processNumber = (num, step) => {
+    if (step === 0) return 1;
+    const cacheKey = `${num},${step}`;
 
-  let numInt = parseInt(numString);
-  let product = numInt * 2024;
-  return [product.toString()];
-};
+    const save = (result) => {
+      cache.set(cacheKey, result);
+      return result;
+    };
 
-const transformSequence = (array) => {
-  const newArray = [];
-  array.forEach(ns => {
-    const newNum = transformNumber(ns);
-    for (const n of newNum) {
-      newArray.push(n)
+    if (cache.has(cacheKey)) return cache.get(cacheKey);
+
+    if (num === '0') return save(processNumber('1', step - 1));
+
+    if (num.length % 2 === 0) {
+      const mid = num.length / 2,
+            left = num.slice(0, mid),
+            right = num.slice(mid);
+
+      return save(processNumber(parseInt(left, 10).toString(), step - 1) + processNumber(parseInt(right, 10).toString(), step - 1));
     }
-  })
 
-  return newArray;
-};
-
-const performTransformations = (count, sequence) => {
-  let current = sequence.slice();
-  console.log("starting sequence:", current);
-  for (let i = 1; i <= count; i++) {
-    current = transformSequence(current);
-    console.log("step", i, ":", current);
+    return save(processNumber((parseInt(num, 10) * 2024).toString(), step - 1));
   }
 
-  return current;
+  return sequence.reduce((acc, num) => acc + processNumber(num, transformations), 0);
 }
 
 const inputString = input;
 // const inputString = "125 17"; // test input
 
 const array = initializeInput(inputString);
-// console.log((performTransformations(6, array)).length);   // test input => 22,    full input => 73
-console.log((performTransformations(25, array)).length);  // test input => 55312, full input => 190865
+
+console.log(countNumbersAfterTransformations(array, 6));   // test input => 22,             full input => 73
+console.log(countNumbersAfterTransformations(array, 25));  // test input => 55312,          full input => 190865
+console.log(countNumbersAfterTransformations(array, 75));  // test input => 65601038650482, full input => 225404711855335
