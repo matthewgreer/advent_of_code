@@ -29,116 +29,112 @@
         },
       ]
 
-    equation for finding combinations of buttonA and buttonB presses that navigate to the prize?
-    if A is the # of presses of button A and B is the # of presses of button B
-      (A * 94) + (B * 22) = 8400
-      (A * 34) + (B * 67) = 5400
-
-      could press B button no more than 80 times, which gets you to [1760, 5360]. beyond that you've overshot along the Y axis
-      could press A button no more than 89 times, which gets you to [8366, 3026]. beyond that you've overshot along the X axis
-
-      the 2 last coordinates you could get to the prize from are:
-                                [8306, 5366]                                             [8378, 5333]
-      the 4 penultimate coordinates you could get to the prize from are:
-                             /                 \                                        /            \
-                            /                   \                                      /              \
-                      [94, 34]                [22, 67]                            [94, 34]           [22, 67]
-                [8212, 5332]                  [8284, 5269]                 [8284, 5299]               [8356, 5266]
-      the 8 antepenultimate coordinates
-                /         \                   /           \                /          \                /           \
-               /           \                 /             \              /            \              /             \
-          [94, 34]       [22, 67]        [94, 34]        [22, 67]      [94, 34]        [22, 67]      [94, 34]        [22, 67]
-      [8118, 5298]     [8190, 5265]  [8190, 5235]     [8272, 5202]  [8190, 5265]     [8262, 5232]  [8262, 5232]     [8334, 5199]
+    part 2 evilness: oops. the X & Y coordinates of the prize are off by 10,000,000,000,000 (ten trillion). so for the example above, the coordinates would be:
+      [
+        {
+          buttonA: [94, 34],
+          buttonB: [22, 67],
+          prize: [10000000008400, 10000000005400]
+        },
+        {
+          buttonA: [26, 66],
+          buttonB: [67, 21],
+          prize: [10000000012748, 10000000012176]
+        },
+        {
+          buttonA: [17, 86],
+          buttonB: [84, 37],
+          prize: [10000000007870, 10000000006450]
+        },
+        {
+          buttonA: [69, 23],
+          buttonB: [27, 71],
+          prize: [10000000018641, 10000000010279]
+        },
+      ]
 
 */
 
 import getInput from './shared/getInput.js';
 const input = await getInput(13);
 
-const parseInput= (input) => {
-  const clawMachines = input.trim().split('\n\n');
-  const result = clawMachines.map(clawMachine => {
+const parseInput= (input, part = 1) => {
+  const clawMachines = input.trim().split('\n\n').map(clawMachine => {
     const lines = clawMachine.split('\n');
     const buttonA = lines[0].match(/Button A: X\+(\d+), Y\+(\d+)/).slice(1, 3).map(Number);
     const buttonB = lines[1].match(/Button B: X\+(\d+), Y\+(\d+)/).slice(1, 3).map(Number);
-    const prize = lines[2].match(/Prize: X=(\d+), Y=(\d+)/).slice(1, 3).map(Number);
+    let prize = lines[2].match(/Prize: X=(\d+), Y=(\d+)/).slice(1, 3).map(Number);
+
+    if (part === 2) {
+      prize = prize.map(coord => coord + 10000000000000);
+    }
+
     return { buttonA, buttonB, prize };
   });
-  return result;
+  return clawMachines;
 };
 
-class Coord {
-  constructor(x, y, aPresses = 0, bPresses = 0) {
-    this.x = x,
-    this.y = y;
-    this.aPresses = aPresses;
-    this.bPresses = bPresses;
-  }
+const getCramerCoefficients = (clawMachine) => {
+  /* Cramer's Rule is a method for solving a system of linear equations. If you have two equations with two unknowns:
+    1. (a_1x + b_1y = c_1)
+    2. (a_2x + b_2y = c_2)
+  you can use determinants to solve for x and y. A determinant is calculated from a matrix. For a 2x2 matrix:
+    | a  b |
+    | c  d |
+  the determinant is calculated as: det = a * d - b * c.
 
-  get key() {
-    return `[${this.x}, ${this.y}]`
-  }
-}
+  So for our equations, where
+    A signifies the number of times buttonA is pressed
+    B signifies the number of times buttonB is pressed
+    [aX, aY] is the amount one press of buttonA shifts the X and Y coordindates
+    [bX, bY] is the amount one press of buttonB shifts the X and Y coordindates
+    [pX, pY] are the coordinates where the prize is located
 
-const validPresses = (clawMachine) => {
-  const { buttonA, buttonB, prize } = clawMachine;
-  const valids = [];
-  const queue = [new Coord(0, 0, 0, 0)];
-  const visited = new Set();
-  const [pX, pY] = prize,
+    1. A * aX + B * bX = pX  AND
+    2. A * aY + B * bY = pY
+
+    our matrices:
+    | aX  bX |      | pX  bX |      | aX  pX |
+    | aY  bY |      | pY  bY |      | aY  pY |
+
+    so  determinate D  = aX * bY - bX * aY
+        determinate Da = pX * bY - bX * pY
+        determinate Db = aX * pY - aY * pX
+
+    and those coefficients for A and B are:
+    A: Da / D,
+    B: Db / D
+  */
+ 
+  const { buttonA, buttonB, prize } = clawMachine,
+        [pX, pY] = prize,
         [aX, aY] = buttonA,
-        [bX, bY] = buttonB;
+        [bX, bY] = buttonB,
+        D = aX * bY - bX * aY;
 
-  while (queue.length > 0) {
-    // console.log(queue.length);
-    const currentCoord = queue.shift();
+  if (D === 0) return { a: 0, b: 0 }
 
-    if (visited.has(currentCoord.key)) {
-      // console.log("ALREADY VISITED!")
-      continue;
-    }
+  const Da = pX * bY - bX * pY,
+        Db = aX * pY - pX * aY;
 
-    if (currentCoord.x === pX && currentCoord.y === pY) {
-      // console.log("MATCH!", currentCoord.x, pX, currentCoord.y);
-      valids.push(currentCoord)
-    };
-
-    visited.add(currentCoord.key);
-
-    const newAX = currentCoord.x + aX,
-          newAY = currentCoord.y + aY,
-          newBX = currentCoord.x + bX,
-          newBY = currentCoord.y + bY;
-
-    // console.log([[newAX, newAY], [newBX, newBY]]);
-
-    if (newAX <= pX && newAY <= pY) {
-      queue.push(new Coord(newAX, newAY, currentCoord.aPresses + 1, currentCoord.bPresses));
-    }
-
-    if (newBX <= pX && newBY <= pY) {
-      queue.push(new Coord(newBX, newBY, currentCoord.aPresses, currentCoord.bPresses + 1));
-    }
-  }
-
-  return valids;
+  return { a: Da / D, b: Db / D };
 };
 
-const tokenTotal = (inputString) => {
+const countTokens = (clawMachine) => {
+  const { a, b } = getCramerCoefficients(clawMachine);
+
+  if ([a, b].some(coeffs => coeffs !== Math.trunc(coeffs))) return 0; // ignore results that have non-integer coefficients
+
+  return a * 3 + b;
+};
+
+const totalTokens = (inputString, part) => {
   let total = 0;
 
-  const clawMachines = parseInput(inputString);
+  const clawMachines = parseInput(inputString, part);
 
   for (const cm of clawMachines) {
-    const valids = validPresses(cm);
-
-    if (valids.length > 1) {
-      throw new Error("Yoips. Now there are two of them.", valids);
-    }
-
-    for (const coord of valids) {
-      total += (coord.aPresses * 3) + coord.bPresses;
-    }
+    total += countTokens(cm);
   }
 
   return total;
@@ -148,4 +144,5 @@ const tokenTotal = (inputString) => {
 
 const inputString = input;
 
-console.log(tokenTotal(inputString));
+console.log("Part 1: ", totalTokens(inputString, 1));
+console.log("Part 2: ", totalTokens(inputString, 2));
